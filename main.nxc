@@ -1,0 +1,251 @@
+#define BLACK 0
+#define BLUE 1
+#define GREEN 2
+#define YELLOW 3
+#define RED 4
+#define WHITE 5
+#define VALIDE true
+#define INVALIDE false
+struct Couleur{
+	string name;
+	bool isValid;
+	int idColor;
+	int idLine;
+	
+};
+void menu(int choice);
+int vitesse_moteur; 
+int vitesse_bras;
+Couleur Colors[6];
+int couleurCourante;
+
+
+
+string getText(Couleur x)
+{
+	string temp[10];
+	if (x.isValid)
+	{
+		if (couleurCourante == x.idColor)
+		{
+			return(StrCat("-> ",x.name));
+		}
+		else
+		{
+			return(x.name);
+		}	
+	}
+	else
+	{
+		if (couleurCourante == x.idColor)
+		{
+			return(StrCat("-> ", x.name, "*"));
+		}
+		else
+		{
+			return(StrCat(x.name, "*"));
+		}
+	}
+}
+task ejecter()
+{
+	RotateMotor (OUT_C,vitesse_bras,-360);
+}
+/*
+INPUT_BLACKCOLOR   	1
+ 
+INPUT_BLUECOLOR   	2
+ 
+INPUT_GREENCOLOR   	3
+ 
+INPUT_YELLOWCOLOR   	4
+ 
+INPUT_REDCOLOR   	5
+ 
+INPUT_WHITECOLOR   	6
+*/
+task colorSensor()
+{
+	while(1)
+	{
+		SetSensorColorFull(S2);
+		ColorSensorReadType csr;
+		csr.Port = S2;
+		SysColorSensorRead(csr);
+		if (csr.Result == NO_ERR) 
+		{
+			//TextOut(0, LCD_LINE5, NumToStr(csr.ColorValue));
+			Couleur c = Colors[csr.ColorValue-1];
+			if (!c.isValid)
+			//ejecter
+			{
+				ClearLine(LCD_LINE8);
+				TextOut(0,LCD_LINE8,StrCat("Invalide ",c.name));
+				StartTask(ejecter);
+			}
+			else
+			{
+				ClearLine(LCD_LINE8);
+				TextOut(0,LCD_LINE8,StrCat("Correct ",c.name));
+			}
+		}
+		Wait(200);
+	}
+}
+void initColors()
+{
+	Colors[BLACK].name = "Noir";
+	Colors[BLACK].isValid = VALIDE;
+	Colors[BLACK].idColor = BLACK;
+	Colors[BLACK].idLine = LCD_LINE8;
+
+	Colors[BLUE].name = "Bleu";
+	Colors[BLUE].isValid = VALIDE;
+	Colors[BLUE].idColor = BLUE;
+	Colors[BLUE].idLine = LCD_LINE3;
+
+	Colors[GREEN].name = "Vert";
+	Colors[GREEN].isValid = VALIDE;
+	Colors[GREEN].idColor = GREEN;
+	Colors[GREEN].idLine = LCD_LINE4;
+
+	Colors[YELLOW].name = "Jaune";
+	Colors[YELLOW].isValid = VALIDE;
+	Colors[YELLOW].idColor = YELLOW;
+	Colors[YELLOW].idLine = LCD_LINE5;
+
+	Colors[RED].name = "Rouge";
+	Colors[RED].isValid = INVALIDE;
+	Colors[RED].idColor = RED;
+	Colors[RED].idLine = LCD_LINE6;
+
+	Colors[WHITE].name = "Blanc";
+	Colors[WHITE].isValid = VALIDE;
+	Colors[WHITE].idColor = WHITE;
+	Colors[WHITE].idLine = LCD_LINE7;
+
+	
+}
+task main()
+{
+
+    initColors();
+    couleurCourante = RED;
+    vitesse_moteur = 50;
+    vitesse_bras = 50;
+    int choice = 3;
+    StartTask(colorSensor);
+    menu(choice);
+    
+    while(1){
+	OnFwd(OUT_A, vitesse_moteur);				//Turn On Motor						
+	
+	if (ButtonPressed(BTNCENTER, false)){
+		while(ButtonPressed(BTNCENTER, false)){}
+		choice = (choice + 1)%4;
+		menu(choice);
+	}
+        if (ButtonPressed(BTNLEFT, false))
+	{
+		switch(choice)
+		{
+			case 0:
+				if (vitesse_moteur > 0)				//Speed cannot be < 0
+					vitesse_moteur=vitesse_moteur-10;
+				while(ButtonPressed(BTNLEFT, false)){}	
+				ClearLine(LCD_LINE4);
+				TextOut(0,LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_moteur)));
+				break;
+			case 1:
+				if (vitesse_bras > 0)				//Speed cannot be < 0
+					vitesse_bras=vitesse_bras-10;
+				while(ButtonPressed(BTNLEFT, false)){}	
+				ClearLine(LCD_LINE4);
+				TextOut(0,LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_bras)));
+				break;
+			case 3:
+				ClearLine(Colors[couleurCourante].idLine);
+				Colors[couleurCourante].isValid = !Colors[couleurCourante].isValid;
+				Couleur c = Colors[couleurCourante];
+				TextOut(0, c.idLine, getText(c));
+				while(ButtonPressed(BTNLEFT, false)){}					
+				break;
+			}//Fin switch
+		
+	}//fin If Button Left
+        if (ButtonPressed(BTNRIGHT, false)){
+		switch(choice)
+		{
+			case 0:
+				if (vitesse_moteur < 120)			//Speed cannot be > 120
+					vitesse_moteur=vitesse_moteur+10;
+				while(ButtonPressed(BTNRIGHT, false)){}
+				ClearLine(LCD_LINE4);
+				TextOut(0,LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_moteur)));
+				break;
+			case 1:
+				if (vitesse_bras < 120)				//Speed cannot be < 0
+					vitesse_bras=vitesse_bras+10;
+				while(ButtonPressed(BTNRIGHT, false)){}	
+				ClearLine(LCD_LINE4);
+				TextOut(0,LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_bras)));
+				break;
+			case 2:
+				StartTask(ejecter);
+				while(ButtonPressed(BTNRIGHT, false)){}	
+				break;
+			case 3:
+				
+				int couleurSuivante = (couleurCourante+1)%6;
+				if (couleurSuivante == BLACK) 
+					couleurSuivante = BLUE;
+
+				Couleur c1 = Colors[couleurCourante];			//Récuperer la couleur actuelle
+				Couleur c2 = Colors[couleurSuivante];			//Récuperer la prochaine couleur
+				ClearLine(c1.idLine);					//Effacer la ligne de la couleur actuelle
+				ClearLine(c2.idLine);					//Effacer la ligne de la couleur suivante
+
+				couleurCourante = couleurSuivante;			//Mettre à jour la couleur courante à la suivante
+				TextOut(0, c1.idLine, getText(c1));			//Mettre à jour l'affichage
+				TextOut(0, c2.idLine, getText(c2));			//Mettre à jour l'affichage 
+				
+				while(ButtonPressed(BTNRIGHT, false)){}
+					
+				break;			
+		}
+        }
+	
+    }
+}
+
+void menu(int choice)
+{
+	ClearScreen();
+	TextOut(0, LCD_LINE1, "Welcome to our super robot!");
+	switch(choice)
+	{
+		case 0:
+			TextOut(0, LCD_LINE2, "vitesse du tapis");
+			TextOut(0, LCD_LINE3, "Utilisez > et <");
+			TextOut(0, LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_moteur)));
+			break;
+		case 1: 
+			TextOut(0, LCD_LINE2, "vitesse du bras");
+			TextOut(0, LCD_LINE3, "Utilisez > et <");
+			TextOut(0, LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_bras)));
+			break;
+		case 2:
+			TextOut(0, LCD_LINE2, "Test Du Bras");
+			TextOut(0, LCD_LINE3, "Lancez!");
+			break;
+		case 3: //Choix des couleurs à garder
+			TextOut(0, LCD_LINE2, "> sel, < on/off");
+			int i = 0;
+			for (i = 1; i < 6; i++)
+			{
+				Couleur x = Colors[i];
+				TextOut(0, x.idLine, getText(x));
+			}
+			break;
+	}
+}
