@@ -6,6 +6,20 @@
 #define WHITE 5
 #define VALIDE true
 #define INVALIDE false
+#define DEFAULT_VITESSE_TAPIS 20
+#define DEFAULT_VITESSE_BRAS 120
+#define DELAY_FOR_10 7100
+#define DELAY_FOR_20 2800 
+#define DELAY_FOR_30 1500
+#define DISTANCE_TAPIS 12.5
+
+// r*2*pi/(60 / vitesse_moteur)
+// V_Lineaire = 0.02 * 2 * 3.14 / (60 / vitesse_moteur);
+// D = 0.125;
+// Delay = 12.5/V_Lineaire
+
+// V_lineaire = 0.02 * 2 * 3.14 / (60 / 20) = 0.02 * 2 * 3.14 / 3 = 0.42
+//Delay = 
 struct Couleur{
 	string name;
 	bool isValid;
@@ -18,8 +32,20 @@ int vitesse_moteur;
 int vitesse_bras;
 Couleur Colors[6];
 int couleurCourante;
+int delay;
+int nb;
+bool ModeTestBras;
 
-
+int getDelay()
+{
+	float Vitesse_Lineaire = (0.02 * 2 * 3.14) / (60.0 / vitesse_moteur);
+	float Distance = 0.125;
+	float Delay = (Distance / Vitesse_Lineaire) * 1000;
+	
+	int temp = Delay;
+	NumOut(0, LCD_LINE5, temp);
+	return(temp);
+}
 
 string getText(Couleur x)
 {
@@ -47,8 +73,27 @@ string getText(Couleur x)
 		}
 	}
 }
+
 task ejecter()
 {
+	
+	if (!ModeTestBras)
+	{
+		ClearLine(LCD_LINE7);
+		int time = delay;
+		while (time != 0)
+		{
+			TextOut(0,LCD_LINE7,StrCat("Dans: ",NumToStr(time)," ms"));
+			Wait(100);
+			if (time > 100)
+				time -= 100;
+			else
+				time = 0;
+		}
+		ClearLine(LCD_LINE7);
+		TextOut(0, LCD_LINE7, "Ejection!");
+		//Wait(delay);
+	}
 	RotateMotor (OUT_C,vitesse_bras,-360);
 }
 /*
@@ -89,7 +134,7 @@ task colorSensor()
 				TextOut(0,LCD_LINE8,StrCat("Correct ",c.name));
 			}
 		}
-		Wait(200);
+		//Wait(200);
 	}
 }
 void initColors()
@@ -100,17 +145,17 @@ void initColors()
 	Colors[BLACK].idLine = LCD_LINE8;
 
 	Colors[BLUE].name = "Bleu";
-	Colors[BLUE].isValid = VALIDE;
+	Colors[BLUE].isValid = INVALIDE;
 	Colors[BLUE].idColor = BLUE;
 	Colors[BLUE].idLine = LCD_LINE3;
 
 	Colors[GREEN].name = "Vert";
-	Colors[GREEN].isValid = VALIDE;
+	Colors[GREEN].isValid = INVALIDE;
 	Colors[GREEN].idColor = GREEN;
 	Colors[GREEN].idLine = LCD_LINE4;
 
 	Colors[YELLOW].name = "Jaune";
-	Colors[YELLOW].isValid = VALIDE;
+	Colors[YELLOW].isValid = INVALIDE;
 	Colors[YELLOW].idColor = YELLOW;
 	Colors[YELLOW].idLine = LCD_LINE5;
 
@@ -126,14 +171,43 @@ void initColors()
 
 	
 }
+
+void initDefault()
+{
+	couleurCourante = RED;
+    	vitesse_moteur = DEFAULT_VITESSE_TAPIS;
+    	vitesse_bras = DEFAULT_VITESSE_BRAS;
+	ModeTestBras = false;
+	nb = 0;
+}
+
+void updateDelay()
+{
+	/*switch(vitesse_moteur)
+	{
+		case 10:
+			delay = DELAY_FOR_10;
+			break; 
+		case 20:
+			delay = DELAY_FOR_20;
+			break;
+		case 30:
+			delay = DELAY_FOR_30;
+			break;
+		default:
+			delay = 0;
+			break;
+	}*/
+	delay = getDelay();
+}
 task main()
 {
 
     initColors();
-    couleurCourante = RED;
-    vitesse_moteur = 50;
-    vitesse_bras = 50;
-    int choice = 3;
+    initDefault();
+    delay = 0;
+    updateDelay();
+    int choice = 0;
     StartTask(colorSensor);
     menu(choice);
     
@@ -153,6 +227,7 @@ task main()
 				if (vitesse_moteur > 0)				//Speed cannot be < 0
 					vitesse_moteur=vitesse_moteur-10;
 				while(ButtonPressed(BTNLEFT, false)){}	
+				updateDelay();
 				ClearLine(LCD_LINE4);
 				TextOut(0,LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_moteur)));
 				break;
@@ -180,6 +255,7 @@ task main()
 				if (vitesse_moteur < 120)			//Speed cannot be > 120
 					vitesse_moteur=vitesse_moteur+10;
 				while(ButtonPressed(BTNRIGHT, false)){}
+				updateDelay();
 				ClearLine(LCD_LINE4);
 				TextOut(0,LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_moteur)));
 				break;
@@ -221,6 +297,7 @@ task main()
 void menu(int choice)
 {
 	ClearScreen();
+	ModeTestBras = false;
 	TextOut(0, LCD_LINE1, "Welcome to our super robot!");
 	switch(choice)
 	{
@@ -235,6 +312,7 @@ void menu(int choice)
 			TextOut(0, LCD_LINE4,StrCat("Vitesse : ", NumToStr(vitesse_bras)));
 			break;
 		case 2:
+			ModeTestBras = true;
 			TextOut(0, LCD_LINE2, "Test Du Bras");
 			TextOut(0, LCD_LINE3, "Lancez!");
 			break;
