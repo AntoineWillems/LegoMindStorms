@@ -6,11 +6,32 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXFileReference section */
+		5968D0E318CA86B9004D6797 /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
+		5968D0E418CA86B9004D6797 /* main.nxc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = main.nxc; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		5968D0E518CA86B9004D6797 /* maths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = maths.h; sourceTree = "<group>"; };
+		5968D0E618CA86B9004D6797 /* nbc */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = nbc; sourceTree = "<group>"; };
+		5968D0E718CA86B9004D6797 /* nxtcom */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = nxtcom; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
 /* Begin PBXGroup section */
 		5968D0D818CA8692004D6797 = {
 			isa = PBXGroup;
 			children = (
+				5968D0E318CA86B9004D6797 /* main.h */,
+				5968D0E418CA86B9004D6797 /* main.nxc */,
+				5968D0E518CA86B9004D6797 /* maths.h */,
+				5968D0E818CA86BF004D6797 /* build_tools */,
 			);
+			sourceTree = "<group>";
+		};
+		5968D0E818CA86BF004D6797 /* build_tools */ = {
+			isa = PBXGroup;
+			children = (
+				5968D0E618CA86B9004D6797 /* nbc */,
+				5968D0E718CA86B9004D6797 /* nxtcom */,
+			);
+			name = build_tools;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -18,11 +39,12 @@
 /* Begin PBXLegacyTarget section */
 		5968D0DD18CA8692004D6797 /* LegoMindstorms */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION)";
+			buildArgumentsString = "-Z1 \"main.nxc\" -O=\"legoMindstorms.rxe\"";
 			buildConfigurationList = 5968D0E018CA8692004D6797 /* Build configuration list for PBXLegacyTarget "LegoMindstorms" */;
 			buildPhases = (
 			);
-			buildToolPath = /usr/bin/make;
+			buildToolPath = "$(PROJECT_DIR)/nbc";
+			buildWorkingDirectory = "";
 			dependencies = (
 			);
 			name = LegoMindstorms;
