@@ -1,0 +1,322 @@
+#include "main.h"
+
+  /////////////////
+ // GLOBAL VARS //
+/////////////////
+
+int currentDelay = 0;
+int currentState = 0;
+int currentCarpetSpeed = 0;
+int currentArmSpeed = 0;
+
+int cursorPos = 0;
+bool started = false;
+
+Color colors[6];
+
+task main()
+{
+    initParams();
+    initColors();
+    
+    displayInterface();
+    
+    StartTask(buttonLeftEvent);
+    StartTask(buttonRightEvent);
+    StartTask(buttonCenterEvent);
+}
+
+  ////////////////////
+ // DEFAULT PARAMS //
+////////////////////
+
+void initParams()
+{
+    currentState = INIT;
+    currentCarpetSpeed = DEFAULT_CARPET_SPEED;
+    currentArmSpeed = DEFAULT_ARM_SPEED;
+    currentDelay = computeDelayForSpeed(currentCarpetSpeed);
+}
+
+void initColors()
+{
+	colors[INPUT_BLACKCOLOR-1].name = "Noir";
+	colors[INPUT_BLACKCOLOR-1].isValid = VALID_COLOR;
+    
+	colors[INPUT_BLUECOLOR-1].name = "Bleu";
+	colors[INPUT_BLUECOLOR-1].isValid = INVALID_COLOR;
+    
+	colors[INPUT_GREENCOLOR-1].name = "Vert";
+	colors[INPUT_GREENCOLOR-1].isValid = INVALID_COLOR;
+    
+	colors[INPUT_YELLOWCOLOR-1].name = "Jaune";
+	colors[INPUT_YELLOWCOLOR-1].isValid = INVALID_COLOR;
+    
+	colors[INPUT_REDCOLOR-1].name = "Rouge";
+	colors[INPUT_REDCOLOR-1].isValid = INVALID_COLOR;
+    
+	colors[INPUT_WHITECOLOR-1].name = "Blanc";
+	colors[INPUT_WHITECOLOR-1].isValid = VALID_COLOR;
+}
+
+  ///////////////////
+ // ROBOT ACTIONS //
+///////////////////
+
+void startOrStop()
+{
+    if(!started)
+        startRobot();
+    else
+        stopRobot();
+}
+
+void startRobot()
+{
+    started = true;
+    OnFwd(OUT_A, currentCarpetSpeed);
+    
+    SetSensorColorFull(IN_1);
+    StartTask(colorAnalysis);
+}
+
+void stopRobot()
+{
+    started = false;
+    Off(OUT_A);
+    SetSensorColorNone(IN_1);
+}
+
+void updateCarpetSpeed()
+{
+    currentDelay = computeDelayForSpeed(currentCarpetSpeed);
+    
+    if(started)
+        OnFwd(OUT_A, currentCarpetSpeed);
+}
+
+  /////////////////////
+ // SECONDARY TASKS //
+/////////////////////
+
+task buttonLeftEvent()
+{
+    while(true)
+    {
+        if(ButtonPressed(BTNLEFT, false))
+        {
+            while(ButtonPressed(BTNLEFT, false)){}
+            
+            switch(currentState)
+            {
+                case INIT:
+                case STATE1:
+                    if(cursorPos == 0)
+                        cursorPos = 2;
+                    else
+                        cursorPos--;
+                    break;
+                    
+                case STATE2:
+                    if(cursorPos == 0)
+                        cursorPos = 4;
+                    else
+                        cursorPos--;
+                    break;
+                    
+                case STATE3:
+                    if(currentCarpetSpeed == 0)
+                        currentCarpetSpeed = 120;
+                    else
+                        currentCarpetSpeed -= 10;
+                    updateCarpetSpeed();
+                    break;
+                case STATE4:
+                    if(currentArmSpeed == 0)
+                        currentArmSpeed = 120;
+                    else
+                        currentArmSpeed -= 10;
+                    break;
+            }
+            
+            displayInterface();
+        }
+    }
+}
+
+task buttonRightEvent()
+{
+    while(true)
+    {
+        if(ButtonPressed(BTNRIGHT, false))
+        {
+            while(ButtonPressed(BTNRIGHT, false)){}
+            
+            switch(currentState)
+            {
+                case INIT:
+                case STATE1:
+                    cursorPos = (cursorPos + 1) % 3;
+                    break;
+                case STATE2:
+                    cursorPos = (cursorPos + 1) % 5;
+                    break;
+                case STATE3:
+                    currentCarpetSpeed = (currentCarpetSpeed + 10) % 130;
+                    updateCarpetSpeed();
+                    break;
+                case STATE4:
+                    currentArmSpeed = (currentArmSpeed + 10) % 130;
+                    break;
+            }
+            displayInterface();
+        }
+    }
+}
+
+task buttonCenterEvent()
+{
+    while(true)
+    {
+        if(ButtonPressed(BTNCENTER, false))
+        {
+            while(ButtonPressed(BTNCENTER, false)){}
+            switch(currentState)
+            {
+                case INIT:
+                    if(cursorPos == 0)
+                        startOrStop();
+                    else if(cursorPos == 1)
+                    {
+                        cursorPos = 0;
+                        currentState = STATE2;
+                    }
+                    else if(cursorPos == 2)
+                    {
+                        cursorPos = 0;
+                        currentState = STATE1;
+                    }
+                    break;
+                    
+                case STATE1:
+                    if(cursorPos == 0)
+                        currentState = INIT;
+                    else if(cursorPos == 1)
+                        currentState = STATE3;
+                    else if(cursorPos == 2)
+                        currentState = STATE4;
+                    break;
+                    
+                case STATE2:
+                    if(cursorPos == 0)
+                        currentState = INIT;
+                    else if(cursorPos == 1)
+                        colors[INPUT_YELLOWCOLOR-1].isValid = (colors[INPUT_YELLOWCOLOR-1].isValid == VALID_COLOR) ? INVALID_COLOR : VALID_COLOR;
+                    else if(cursorPos == 2)
+                        colors[INPUT_REDCOLOR-1].isValid = (colors[INPUT_REDCOLOR-1].isValid == VALID_COLOR) ? INVALID_COLOR : VALID_COLOR;
+                    else if(cursorPos == 3)
+                        colors[INPUT_GREENCOLOR-1].isValid = (colors[INPUT_GREENCOLOR-1].isValid == VALID_COLOR) ? INVALID_COLOR : VALID_COLOR;
+                    else if(cursorPos == 4)
+                        colors[INPUT_BLUECOLOR-1].isValid = (colors[INPUT_BLUECOLOR-1].isValid == VALID_COLOR) ? INVALID_COLOR : VALID_COLOR;
+                    break;
+                case STATE3:
+                    currentState = STATE1;
+                    break;
+                case STATE4:
+                    currentState = STATE1;
+                    break;
+            }
+            displayInterface();
+        }
+    }
+}
+
+task colorAnalysis()
+{
+    ColorSensorReadType csr;
+    csr.Port = IN_1;
+    
+    while(started)
+    {
+        SysColorSensorRead(csr);
+        if(csr.Result == NO_ERR)
+        {
+            TextOut(0, LCD_LINE8, StrCat("Couleur : ", colors[csr.ColorValue-1].name));
+            if(colors[csr.ColorValue-1].isValid == INVALID_COLOR)
+            {
+                Wait(currentDelay);
+                RotateMotor(OUT_B, currentArmSpeed, -360);
+            }
+        }
+    }
+}
+
+  ///////////////
+ // INTERFACE //
+///////////////
+
+void displayInterface()
+{
+	ClearScreen();
+    
+    switch(currentState)
+    {
+        case INIT:
+            TextOut(0, LCD_LINE1, "UE Projet");
+            TextOut(0, LCD_LINE2, "Groupe KOWAWI");
+            TextOut(0, LCD_LINE4, StrCat(isSelected(0), isRunning()));
+            TextOut(0, LCD_LINE5, StrCat(isSelected(1), " Couleurs"));
+            TextOut(0, LCD_LINE6, StrCat(isSelected(2), " Parametres"));
+            break;
+        case STATE1:
+            TextOut(0, LCD_LINE1, "Parametres");
+            TextOut(0, LCD_LINE4, StrCat(isSelected(0), " Accueil"));
+            TextOut(0, LCD_LINE5, StrCat(isSelected(1), StrCat(StrCat(" V. tapis <", NumToStr(currentCarpetSpeed)), ">")));
+            TextOut(0, LCD_LINE6, StrCat(isSelected(2), StrCat(StrCat(" V. bras <", NumToStr(currentArmSpeed)), ">")));
+            break;
+        case STATE2:
+            TextOut(0, LCD_LINE1, "Couleurs");
+            TextOut(0, LCD_LINE3, StrCat(isSelected(0), " Accueil"));
+            TextOut(0, LCD_LINE4, StrCat(isSelected(1), isInvalid(INPUT_YELLOWCOLOR)));
+            TextOut(0, LCD_LINE5, StrCat(isSelected(2), isInvalid(INPUT_REDCOLOR)));
+            TextOut(0, LCD_LINE6, StrCat(isSelected(3), isInvalid(INPUT_GREENCOLOR)));
+            TextOut(0, LCD_LINE7, StrCat(isSelected(4), isInvalid(INPUT_BLUECOLOR)));
+            break;
+        case STATE3:
+            TextOut(0, LCD_LINE1, "Parametres");
+            TextOut(0, LCD_LINE4, "[] Accueil");
+            TextOut(0, LCD_LINE5, StrCat("[-]", StrCat(StrCat(" V. tapis <", NumToStr(currentCarpetSpeed)), ">")));
+            TextOut(0, LCD_LINE6, StrCat("[]", StrCat(StrCat(" V. bras <", NumToStr(currentArmSpeed)), ">")));
+            break;
+        case STATE4:
+            TextOut(0, LCD_LINE1, "Parametres");
+            TextOut(0, LCD_LINE4, "[] Accueil");
+            TextOut(0, LCD_LINE5, StrCat("[]", StrCat(StrCat(" V. tapis <", NumToStr(currentCarpetSpeed)), ">")));
+            TextOut(0, LCD_LINE6, StrCat("[-]", StrCat(StrCat(" V. bras <", NumToStr(currentArmSpeed)), ">")));
+            break;
+    }
+}
+
+string isSelected(int optionNum)
+{
+    if(optionNum == cursorPos)
+        return "[*]";
+    else
+        return "[]";
+}
+
+string isInvalid(int colorIndex)
+{
+    if(colors[colorIndex-1].isValid == INVALID_COLOR)
+        return StrCat(" + ", colors[colorIndex-1].name);
+    else
+        return StrCat(" ", colors[colorIndex-1].name);
+}
+
+string isRunning()
+{
+    if(started)
+        return " Arreter";
+    else
+        return " Demarrer";
+}
