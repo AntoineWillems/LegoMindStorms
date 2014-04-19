@@ -20,18 +20,21 @@ Color colors[6]; //Tableau des couleurs traitées prises en charge
  **/
 task main()
 {
+    //Initialisation
     initParams();
     initColors();
     
+    //Affichage de l'interface
     displayInterface();
     
+    //Démarrage de l'écoute d'évènements sur les boutons de la brique NXC
     StartTask(buttonLeftEvent);
     StartTask(buttonRightEvent);
     StartTask(buttonCenterEvent);
 }
 
 /**
- *
+ * Tâche d'éjection 1
  **/
 task Eject1()
 {
@@ -40,7 +43,7 @@ task Eject1()
 }
 
 /**
- *
+ * Tâche d'éjection 2
  **/
 task Eject2()
 {
@@ -49,7 +52,7 @@ task Eject2()
 }
 
 /**
- * 
+ * Tâche d'éjection 3
  **/
 task Eject3()
 {
@@ -109,7 +112,7 @@ void initColors()
 ///////////////////
 
 /**
- *
+ * 
  **/
 void startOrStop()
 {
@@ -370,7 +373,7 @@ task colorAnalysis()
 ///////////////
 
 /**
- *
+ * Affichage de l'interface
  **/
 void displayInterface()
 {
@@ -378,6 +381,7 @@ void displayInterface()
     
     switch(currentState)
     {
+        //Vue Accueil
         case INIT:
             TextOut(0, LCD_LINE1, "UE Projet");
             TextOut(0, LCD_LINE2, "Groupe KOWAWI");
@@ -385,12 +389,14 @@ void displayInterface()
             TextOut(0, LCD_LINE5, StrCat(isSelected(1), " Couleurs"));
             TextOut(0, LCD_LINE6, StrCat(isSelected(2), " Parametres"));
             break;
+        //Vue Paramètres
         case STATE1:
             TextOut(0, LCD_LINE1, "Parametres");
             TextOut(0, LCD_LINE4, StrCat(isSelected(0), " Accueil"));
             TextOut(0, LCD_LINE5, StrCat(isSelected(1), StrCat(StrCat(" V. tapis <", NumToStr(currentCarpetSpeed)), ">")));
             TextOut(0, LCD_LINE6, StrCat(isSelected(2), StrCat(StrCat(" V. bras <", NumToStr(currentArmSpeed)), ">")));
             break;
+        //Vue Couleurs
         case STATE2:
             TextOut(0, LCD_LINE1, "Couleurs");
             TextOut(0, LCD_LINE3, StrCat(isSelected(0), " Accueil"));
@@ -399,12 +405,14 @@ void displayInterface()
             TextOut(0, LCD_LINE6, StrCat(isSelected(3), isInvalid(INPUT_GREENCOLOR)));
             TextOut(0, LCD_LINE7, StrCat(isSelected(4), isInvalid(INPUT_BLUECOLOR)));
             break;
+        //Vue vitesse du tapis
         case STATE3:
             TextOut(0, LCD_LINE1, "Parametres");
             TextOut(0, LCD_LINE4, "[] Accueil");
             TextOut(0, LCD_LINE5, StrCat("[-]", StrCat(StrCat(" V. tapis <", NumToStr(currentCarpetSpeed)), ">")));
             TextOut(0, LCD_LINE6, StrCat("[]", StrCat(StrCat(" V. bras <", NumToStr(currentArmSpeed)), ">")));
             break;
+        //Vue vitesse du bras
         case STATE4:
             TextOut(0, LCD_LINE1, "Parametres");
             TextOut(0, LCD_LINE4, "[] Accueil");
@@ -415,7 +423,7 @@ void displayInterface()
 }
 
 /**
- *
+ * Dessin de sélection d'une option
  **/
 string isSelected(int optionNum)
 {
@@ -426,7 +434,7 @@ string isSelected(int optionNum)
 }
 
 /**
- *
+ * Dessin de la sélection d'une couleur
  **/
 string isInvalid(int colorIndex)
 {
@@ -437,7 +445,7 @@ string isInvalid(int colorIndex)
 }
 
 /**
- *
+ * Affichage du changement d'état du robot
  **/
 string isRunning()
 {
