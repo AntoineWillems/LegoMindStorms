@@ -6,15 +6,18 @@
 
 int currentDelay = 0;
 int currentState = 0;
-int currentCarpetSpeed = 0;
-int currentArmSpeed = 0;
+int currentCarpetSpeed = 0; //Vitesse du tapis
+int currentArmSpeed = 0; //Vitesse du bras
 
 int cursorPos = 0;
 bool started = false;
 
 bool ejectingInProgress[3];
-Color colors[6];
+Color colors[6]; //Tableau des couleurs traitées prises en charge
 
+/**
+ * Point d'entrée dans le programme
+ **/
 task main()
 {
     initParams();
@@ -27,18 +30,27 @@ task main()
     StartTask(buttonCenterEvent);
 }
 
+/**
+ *
+ **/
 task Eject1()
 {
     Wait(currentDelay);
     RotateMotor(OUT_B, currentArmSpeed, -360);
 }
 
+/**
+ *
+ **/
 task Eject2()
 {
     Wait(currentDelay);
     RotateMotor(OUT_B, currentArmSpeed, -360);
 }
 
+/**
+ * 
+ **/
 task Eject3()
 {
     Wait(currentDelay);
@@ -49,31 +61,45 @@ task Eject3()
  // DEFAULT PARAMS //
 ////////////////////
 
+/**
+ * Initialisation du robot
+ * avec des paramètres par défaut
+ **/
 void initParams()
 {
-    currentState = INIT;
-    currentCarpetSpeed = DEFAULT_CARPET_SPEED;
-    currentArmSpeed = DEFAULT_ARM_SPEED;
-    currentDelay = computeDelayForSpeed(currentCarpetSpeed);
+    currentState = INIT;//Accueil : vue par défaut
+    currentCarpetSpeed = DEFAULT_CARPET_SPEED;//Vitesse par défaut du tapis
+    currentArmSpeed = DEFAULT_ARM_SPEED;//Vitesse par défaut du bras
+    currentDelay = computeDelayForSpeed(currentCarpetSpeed);//Définition du temps nécessaire avant éjection d'une brique en fonction de la vitesse du tapis (par défaut)
 }
 
+/**
+ * Initialisation des couleurs.
+ * Définition des couleurs éjectées par défaut
+ **/
 void initColors()
 {
+    //Le noir ne sera pas éjecté
 	colors[INPUT_BLACKCOLOR-1].name = "Noir";
 	colors[INPUT_BLACKCOLOR-1].isValid = VALID_COLOR;
     
+    //Le bleu sera éjecté
 	colors[INPUT_BLUECOLOR-1].name = "Bleu";
 	colors[INPUT_BLUECOLOR-1].isValid = INVALID_COLOR;
     
+    //Le vert sera éjecté
 	colors[INPUT_GREENCOLOR-1].name = "Vert";
 	colors[INPUT_GREENCOLOR-1].isValid = INVALID_COLOR;
     
+    //Le jaune sera éjecté
 	colors[INPUT_YELLOWCOLOR-1].name = "Jaune";
 	colors[INPUT_YELLOWCOLOR-1].isValid = INVALID_COLOR;
     
+    //Le rouge sera éjecté
 	colors[INPUT_REDCOLOR-1].name = "Rouge";
 	colors[INPUT_REDCOLOR-1].isValid = INVALID_COLOR;
     
+    //Le blanc ne sera pas éjecté
 	colors[INPUT_WHITECOLOR-1].name = "Blanc";
 	colors[INPUT_WHITECOLOR-1].isValid = VALID_COLOR;
 }
@@ -82,6 +108,9 @@ void initColors()
  // ROBOT ACTIONS //
 ///////////////////
 
+/**
+ *
+ **/
 void startOrStop()
 {
     if(!started)
@@ -90,6 +119,11 @@ void startOrStop()
         stopRobot();
 }
 
+/**
+ * Fonction de démarrage du robot.
+ * Allumage du tapis et du capteur de couleurs.
+ * Démarrage de la routine d'analyse des couleurs.
+ **/
 void startRobot()
 {
     started = true;
@@ -99,6 +133,11 @@ void startRobot()
     StartTask(colorAnalysis);
 }
 
+/**
+ * Fonction d'arrêt du robot.
+ * Arrêt du tapis.
+ * Arrêt du capteur de couleurs.
+ **/
 void stopRobot()
 {
     started = false;
@@ -106,6 +145,11 @@ void stopRobot()
     SetSensorColorNone(IN_1);
 }
 
+/**
+ * Fonction de MàJ de la vitesse du tapis.
+ * Calcul du nouveau délais d'attente avant éjection
+ * puis MàJ de la vitesse du tapis.
+ **/
 void updateCarpetSpeed()
 {
     currentDelay = computeDelayForSpeed(currentCarpetSpeed);
@@ -118,6 +162,10 @@ void updateCarpetSpeed()
  // SECONDARY TASKS //
 /////////////////////
 
+/**
+ * Tâche de détection d'un appuie sur
+ * la touche gauche de la brique NXC.
+ **/
 task buttonLeftEvent()
 {
     while(true)
@@ -128,21 +176,24 @@ task buttonLeftEvent()
             
             switch(currentState)
             {
+                //Si l'on se situe sur l'Accueil ou sur la vue des paramètres
                 case INIT:
                 case STATE1:
+                    //Gestion du curseur
                     if(cursorPos == 0)
                         cursorPos = 2;
                     else
                         cursorPos--;
                     break;
-                    
+                //Si l'on se situe dans la vue de sélection des couleurs
                 case STATE2:
+                    //Gestion du curseur
                     if(cursorPos == 0)
                         cursorPos = 4;
                     else
                         cursorPos--;
                     break;
-                    
+                //Si l'on se situe dans le menu de Màj de la vitesse du tapis
                 case STATE3:
                     if(currentCarpetSpeed == 0)
                         currentCarpetSpeed = 120;
@@ -150,6 +201,7 @@ task buttonLeftEvent()
                         currentCarpetSpeed -= 10;
                     updateCarpetSpeed();
                     break;
+                //Si l'on se situe dans le menu de Màj de la vitesse du bras
                 case STATE4:
                     if(currentArmSpeed == 0)
                         currentArmSpeed = 120;
@@ -157,12 +209,15 @@ task buttonLeftEvent()
                         currentArmSpeed -= 10;
                     break;
             }
-            
-            displayInterface();
+            displayInterface();//Rafraîchir l'affichage de l'interface
         }
     }
 }
 
+/**
+ * Tâche de détection d'un appuie sur
+ * la touche droite de la brique NXC.
+ **/
 task buttonRightEvent()
 {
     while(true)
@@ -173,26 +228,36 @@ task buttonRightEvent()
             
             switch(currentState)
             {
+                //Si l'on se situe sur l'Accueil ou sur la vue des paramètres
                 case INIT:
                 case STATE1:
+                    //Gestion du curseur
                     cursorPos = (cursorPos + 1) % 3;
                     break;
+                //Si l'on se situe dans la vue de sélection des couleurs
                 case STATE2:
+                    //Gestion du curseur
                     cursorPos = (cursorPos + 1) % 5;
                     break;
+                //Si l'on se situe dans le menu de Màj de la vitesse du tapis
                 case STATE3:
                     currentCarpetSpeed = (currentCarpetSpeed + 10) % 130;
                     updateCarpetSpeed();
                     break;
+                //Si l'on se situe dans le menu de Màj de la vitesse du bras
                 case STATE4:
                     currentArmSpeed = (currentArmSpeed + 10) % 130;
                     break;
             }
-            displayInterface();
+            displayInterface();//Rafraîchir l'affichage de l'interface
         }
     }
 }
 
+/**
+ * Tâche de détection d'un appuie sur
+ * la touche orange de la brique NXC.
+ **/
 task buttonCenterEvent()
 {
     while(true)
@@ -202,33 +267,41 @@ task buttonCenterEvent()
             while(ButtonPressed(BTNCENTER, false)){}
             switch(currentState)
             {
+                //Si l'on se situe sur l'Accueil
                 case INIT:
                     if(cursorPos == 0)
                         startOrStop();
+                    //Transition vers la vue de réglage des couleurs
                     else if(cursorPos == 1)
                     {
                         cursorPos = 0;
                         currentState = STATE2;
                     }
+                    //Transition vers la vue de réglage des paramètres
                     else if(cursorPos == 2)
                     {
                         cursorPos = 0;
                         currentState = STATE1;
                     }
                     break;
-                    
+                //Si l'on se situe sur le menu de sélection des paramètres
                 case STATE1:
+                    //Transition vers la vue d'Accueil
                     if(cursorPos == 0)
                         currentState = INIT;
+                    //Transition vers la vue d'édition de la vitesse du tapis
                     else if(cursorPos == 1)
                         currentState = STATE3;
+                    //Transition vers la vue d'édition de la vitesse du bras
                     else if(cursorPos == 2)
                         currentState = STATE4;
                     break;
-                    
+                //Si l'on se situe sur le menu de sélection des couleurs
                 case STATE2:
+                    //Transition vers la vue d'Accueil
                     if(cursorPos == 0)
                         currentState = INIT;
+                    //Sinon activation/désactivation des couleurs
                     else if(cursorPos == 1)
                         colors[INPUT_YELLOWCOLOR-1].isValid = (colors[INPUT_YELLOWCOLOR-1].isValid == VALID_COLOR) ? INVALID_COLOR : VALID_COLOR;
                     else if(cursorPos == 2)
@@ -238,6 +311,7 @@ task buttonCenterEvent()
                     else if(cursorPos == 4)
                         colors[INPUT_BLUECOLOR-1].isValid = (colors[INPUT_BLUECOLOR-1].isValid == VALID_COLOR) ? INVALID_COLOR : VALID_COLOR;
                     break;
+                //Si édition de la vitesse tapis/bras, retour vers vue des paramètres
                 case STATE3:
                     currentState = STATE1;
                     break;
@@ -245,11 +319,14 @@ task buttonCenterEvent()
                     currentState = STATE1;
                     break;
             }
-            displayInterface();
+            displayInterface();//Rafraîchir l'affichage de l'interface
         }
     }
 }
 
+/**
+ * Analyse des couleurs en temps réel
+ **/
 task colorAnalysis()
 {
     ColorSensorReadType csr;
@@ -259,13 +336,16 @@ task colorAnalysis()
     while(started)
     {
         SysColorSensorRead(csr);
-        /* Ne rien faire si il y'a une erreur ou si c'est du Noir (couleur par defaut du tapis) */
+        //Ne rien faire si il y'a une erreur ou si c'est du Noir (couleur par defaut du tapis)
         if((csr.Result == NO_ERR) && !(strcmp(colors[csr.ColorValue-1].name, "Noir") == 0))
         {
+            //Affichage de la dernière couleur détectée
             TextOut(0, LCD_LINE8, StrCat("Couleur : ", colors[csr.ColorValue-1].name));
+            //si elle est invalide
             if(colors[csr.ColorValue-1].isValid == INVALID_COLOR)
             {
-                switch (i)
+                //Répartir l'éjection sur une tâche d'éjection disponible
+                switch(i)
                 {
                     case 0:
                         StartTask(Eject1);
@@ -279,8 +359,8 @@ task colorAnalysis()
                 }
                 i = (i+1) % 3;
             }
-            /* Donner le temps au capteur de detecter une autre couleur */
-            Wait(1000);
+            
+            Wait(1000);//Donner le temps au capteur de détecter une autre couleur
         }
     }
 }
@@ -289,6 +369,9 @@ task colorAnalysis()
  // INTERFACE //
 ///////////////
 
+/**
+ *
+ **/
 void displayInterface()
 {
 	ClearScreen();
@@ -331,6 +414,9 @@ void displayInterface()
     }
 }
 
+/**
+ *
+ **/
 string isSelected(int optionNum)
 {
     if(optionNum == cursorPos)
@@ -339,6 +425,9 @@ string isSelected(int optionNum)
         return "[]";
 }
 
+/**
+ *
+ **/
 string isInvalid(int colorIndex)
 {
     if(colors[colorIndex-1].isValid == INVALID_COLOR)
@@ -347,6 +436,9 @@ string isInvalid(int colorIndex)
         return StrCat(" ", colors[colorIndex-1].name);
 }
 
+/**
+ *
+ **/
 string isRunning()
 {
     if(started)
