@@ -26,6 +26,10 @@ struct Color
 void initParams();
 void initColors();
 
+task Eject1();
+task Eject2();
+task Eject3();
+
 task buttonLeftEvent();
 task buttonRightEvent();
 task buttonCenterEvent();

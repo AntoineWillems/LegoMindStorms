@@ -12,6 +12,7 @@ int currentArmSpeed = 0;
 int cursorPos = 0;
 bool started = false;
 
+bool ejectingInProgress[3];
 Color colors[6];
 
 task main()
@@ -24,6 +25,24 @@ task main()
     StartTask(buttonLeftEvent);
     StartTask(buttonRightEvent);
     StartTask(buttonCenterEvent);
+}
+
+task Eject1()
+{
+    Wait(currentDelay);
+    RotateMotor(OUT_B, currentArmSpeed, -360);
+}
+
+task Eject2()
+{
+    Wait(currentDelay);
+    RotateMotor(OUT_B, currentArmSpeed, -360);
+}
+
+task Eject3()
+{
+    Wait(currentDelay);
+    RotateMotor(OUT_B, currentArmSpeed, -360);
 }
 
   ////////////////////
@@ -236,17 +255,32 @@ task colorAnalysis()
     ColorSensorReadType csr;
     csr.Port = IN_1;
     
+    int i = 0;
     while(started)
     {
         SysColorSensorRead(csr);
-        if(csr.Result == NO_ERR)
+        /* Ne rien faire si il y'a une erreur ou si c'est du Noir (couleur par defaut du tapis) */
+        if((csr.Result == NO_ERR) && !(strcmp(colors[csr.ColorValue-1].name, "Noir") == 0))
         {
             TextOut(0, LCD_LINE8, StrCat("Couleur : ", colors[csr.ColorValue-1].name));
             if(colors[csr.ColorValue-1].isValid == INVALID_COLOR)
             {
-                Wait(currentDelay);
-                RotateMotor(OUT_B, currentArmSpeed, -360);
+                switch (i)
+                {
+                    case 0:
+                        StartTask(Eject1);
+                        break;
+                    case 1:
+                        StartTask(Eject2);
+                        break;
+                    case 2:
+                        StartTask(Eject3);
+                        break;
+                }
+                i = (i+1) % 3;
             }
+            /* Donner le temps au capteur de detecter une autre couleur */
+            Wait(1000);
         }
     }
 }
